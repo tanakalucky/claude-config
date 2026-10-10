@@ -1,0 +1,12 @@
+{
+  "name": "workflow-kit-marketplace",
+  "description": "Reusable bounded development workflow for Claude Code",
+  "owner": { "name": "tanakalucky" },
+  "plugins": [
+    {
+      "name": "workflow-kit",
+      "source": "./plugins/workflow-kit",
+      "description": "Opus-led implementation with bounded research and three-perspective review"
+    }
+  ]
+}

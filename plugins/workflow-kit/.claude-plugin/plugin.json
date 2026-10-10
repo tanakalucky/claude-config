@@ -1,0 +1,7 @@
+{
+  "name": "workflow-kit",
+  "version": "0.1.0",
+  "description": "Reusable development workflow with a persistent three-round review budget",
+  "author": { "name": "tanakalucky" },
+  "repository": "https://github.com/tanakalucky/claude-workflow-kit"
+}
