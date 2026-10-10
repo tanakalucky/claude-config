@@ -48,6 +48,12 @@ directory, outside tracked source and shared across linked worktrees.
 
 - List existing changes before allocating a key. On genuine first use only,
   initialize explicitly; missing/corrupt prior state is a human-recovery blocker.
+- When adopting an existing change from outside the ledger, preserve earlier
+  consumed rounds using the explicit `adopt` procedure in ledger.md, with an
+  evidence hash and reconciled count. Do not start it at zero or manufacture
+  clean reviewer results. An existing ledger/change cannot be overwritten by
+  adoption. A non-Git checkout can use one persistent external `--state-dir`;
+  do not initialize Git merely for the ledger.
 - Build one immutable sanitized packet containing scope, relevant patch/context,
   repo design/rule excerpts, and verification evidence. Bind its SHA-256 to the
   exact code/test snapshot it describes. Keep this snapshot unchanged during a

@@ -7,6 +7,8 @@ of `GATE`; shell-quote paths and opaque values. Do not eval task or repo text.
 `git rev-parse --git-common-dir` plus `/workflow-kit`, shared by linked worktrees.
 Alternatively supply the same absolute `--state-dir /trusted/path` every time;
 its parent must exist. Never place it in the plugin cache or tracked source.
+This explicit state directory also works without Git metadata; do not initialize
+Git merely to use this helper.
 
 ```sh
 # Only for genuinely new state, never recovery of a previously used ledger:
@@ -23,6 +25,40 @@ python3 "GATE" record --change CHANGE_ID --round 1 --perspective security \
 # Also claim/invoke/record test-adequacy and design-rules-docs for this same round.
 python3 "GATE" check --change CHANGE_ID --snapshot PACKET_SHA256
 ```
+
+## Adopting a change already reviewed outside this ledger
+
+Before using `new`, check whether this logical change already consumed review
+rounds. For a first-time migration only, reconcile that count against existing
+evidence. Preserve a sanitized historical summary identifying the change, the
+rounds actually consumed (including interruptions), and evidence references.
+Hash it locally; do not invent reviewer results or discard unresolved findings.
+If the count or history is uncertain, stop and ask the human.
+
+```sh
+# Non-Git checkout: choose one persistent, private directory outside source.
+# Only if this ledger has genuinely never been initialized:
+python3 "GATE" --state-dir /trusted/state/workflow-kit setup --ack-new-ledger
+python3 "GATE" --state-dir /trusted/state/workflow-kit list
+python3 "GATE" --state-dir /trusted/state/workflow-kit adopt \
+  --key existing-change-001 --rounds-consumed 1 \
+  --evidence HISTORY_SHA256 --ack-history
+# Keep the returned change_id. The next start reserves round 2, not round 1.
+```
+
+`adopt` accepts 1-3 previously consumed rounds and only an unused change key.
+It is atomic and refuses repeats or adoption over any existing change, even one
+without rounds. The same evidence hash cannot be adopted under another key.
+After an uncertain response, use `list`/`status`, never a new key.
+Imported rounds have status `adopted`, an `evidence_sha256`, and no reviewer rows,
+claims, finding counts, or code snapshot. They cannot be edited or retroactively
+marked complete. They reserve budget without claiming approval: `check` fails;
+status is `historical_unverified`, or `human_required` when all three rounds were
+consumed. The next normal round still needs all three perspectives. The helper
+validates the hash format, not the evidence's truth; the lead must reconcile it.
+This is not a recovery/reset mechanism for a lost existing ledger.
+
+## Results and recovery
 
 All digests are lowercase SHA-256 (64 hex characters). Compute them locally from
 sanitized artifacts, e.g. `sha256sum` or Python hashlib. A packet must identify

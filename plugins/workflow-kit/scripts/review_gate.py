@@ -139,6 +139,9 @@ def status(db, change):
             "SELECT perspective,status,token,p0,p1,p2,report FROM reviews "
             "WHERE change_id=? AND round=? ORDER BY perspective", (change, row["number"])
         )]
+        if item["status"] == "adopted":
+            # Historical evidence is not a code snapshot or a completed review.
+            item["evidence_sha256"] = item.pop("snapshot")
         rounds.append(item)
     latest = rounds[-1] if rounds else None
     decision = "not_reviewed"
@@ -147,6 +150,8 @@ def status(db, change):
             decision = "in_progress"
         elif latest["status"] == "passed":
             decision = "passed"
+        elif latest["status"] == "adopted" and len(rounds) < LIMIT:
+            decision = "historical_unverified"
         else:
             decision = "human_required" if len(rounds) >= LIMIT else "changes_or_retry_needed"
     return {"change_id": change, "rounds_used": len(rounds), "limit": LIMIT,
@@ -155,6 +160,8 @@ def status(db, change):
 
 def finalize(db, change, number):
     rows = db.execute("SELECT * FROM reviews WHERE change_id=? AND round=?", (change, number)).fetchall()
+    if len(rows) != len(PERSPECTIVES):
+        raise GateError("Only a fully reserved three-perspective round can be finalized")
     if all(r["status"] in ("complete", "failed") for r in rows):
         passed = all(r["status"] == "complete" and r["p0"] == r["p1"] == 0 for r in rows)
         db.execute("UPDATE rounds SET status=? WHERE change_id=? AND number=?",
@@ -162,10 +169,27 @@ def finalize(db, change, number):
 
 
 def execute(db, args):
-    if args.command == "new":
+    if args.command in ("new", "adopt"):
         if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,95}", args.key):
             raise GateError("Use an opaque stable key (1-96 ASCII letters, digits, ., _, -); no personal data")
         row = db.execute("SELECT id FROM changes WHERE change_key=?", (args.key,)).fetchone()
+        if args.command == "adopt":
+            if not args.ack_history:
+                raise GateError("Historical adoption requires --ack-history; reconcile the evidence first")
+            if row:
+                raise GateError("Cannot adopt over an existing change or history; inspect its current ID")
+            if not 1 <= args.rounds_consumed <= LIMIT:
+                raise GateError("Historical rounds consumed must be between 1 and 3")
+            evidence = digest(args.evidence)
+            if db.execute("SELECT 1 FROM rounds WHERE status='adopted' AND snapshot=?",
+                          (evidence,)).fetchone():
+                raise GateError("This historical evidence was already adopted; reuse its existing change ID")
+            change = str(uuid.uuid4())
+            db.execute("INSERT INTO changes VALUES (?,?)", (change, args.key))
+            db.executemany("INSERT INTO rounds VALUES (?,?,?, 'adopted')",
+                           [(change, number, evidence) for number in range(1, args.rounds_consumed + 1)])
+            # Intentionally no reviewer rows, claims, counts, or approval.
+            return {"adopted": True, "status": status(db, change), "change_id": change}
         change = row[0] if row else str(uuid.uuid4())
         if not row:
             db.execute("INSERT INTO changes VALUES (?,?)", (change, args.key))
@@ -213,6 +237,8 @@ def execute(db, args):
         return status(db, args.change)
     review = db.execute("SELECT * FROM reviews WHERE change_id=? AND round=? AND perspective=?",
                         (args.change, args.round, args.perspective)).fetchone()
+    if review is None:
+        raise GateError("Historical evidence-only rounds cannot be claimed or given review results")
     if args.command == "claim":
         if row["status"] != "active" or review["status"] != "pending":
             raise GateError("Perspective already claimed or closed; resume the original agent, do not relaunch")
@@ -255,6 +281,11 @@ def parser():
     sub = p.add_subparsers(dest="command", required=True)
     sub.add_parser("setup").add_argument("--ack-new-ledger", action="store_true")
     sub.add_parser("new").add_argument("--key", required=True)
+    adoption = sub.add_parser("adopt", help="Record acknowledged prior round usage, never reviewer approval")
+    adoption.add_argument("--key", required=True)
+    adoption.add_argument("--rounds-consumed", required=True, type=int)
+    adoption.add_argument("--evidence", required=True, help="SHA-256 of sanitized historical evidence")
+    adoption.add_argument("--ack-history", action="store_true")
     sub.add_parser("list")
     for command in ("status", "check", "start", "claim", "record", "interrupt"):
         cmd = sub.add_parser(command)

@@ -226,6 +226,104 @@ class LedgerTests(unittest.TestCase):
         self.state = Path(self.tmp.name) / "missing-parent" / "fresh"
         self.run_gate("setup", "--ack-new-ledger", ok=False)
 
+    def adopt(self, count=1, key="adopted-001", evidence=HASH, ok=True):
+        return self.run_gate("adopt", "--key", key, "--rounds-consumed", count,
+                             "--evidence", evidence, "--ack-history", ok=ok)
+
+    def test_adoption_preserves_usage_without_fabricated_reviews_or_approval(self):
+        result = self.adopt()
+        self.change = result["change_id"]
+        self.assertEqual(result["status"]["decision"], "historical_unverified")
+        self.assertEqual(result["status"]["rounds_used"], 1)
+        history = result["status"]["rounds"][0]
+        self.assertEqual(history["status"], "adopted")
+        self.assertEqual(history["evidence_sha256"], HASH)
+        self.assertNotIn("snapshot", history)
+        self.assertEqual(history["reviews"], [])
+        self.run_gate("check", "--change", self.change, "--snapshot", HASH, ok=False)
+        self.assertEqual(self.start(OTHER)["round"], 2)
+        self.assertEqual(self.complete_round(2)["decision"], "passed")
+
+    def test_adoption_keeps_three_round_cap_after_future_blocked_review(self):
+        self.change = self.adopt(2)["change_id"]
+        self.assertEqual(self.start()["round"], 3)
+        self.assertEqual(self.complete_round(3, p1=1)["decision"], "human_required")
+        self.run_gate("start", "--change", self.change, "--snapshot", OTHER, ok=False)
+
+    def test_adopting_three_consumed_rounds_requires_human(self):
+        result = self.adopt(3)
+        self.change = result["change_id"]
+        self.assertEqual(result["status"]["decision"], "human_required")
+        self.assertEqual(result["status"]["rounds_used"], 3)
+        self.run_gate("start", "--change", self.change, "--snapshot", HASH, ok=False)
+        self.run_gate("check", "--change", self.change, "--snapshot", HASH, ok=False)
+
+    def test_adoption_rejects_existing_empty_active_or_imported_history(self):
+        self.adopt(key="change-001", ok=False)
+        self.start()
+        self.adopt(key="change-001", ok=False)
+        result = self.adopt()
+        self.adopt(ok=False)
+        self.adopt(count=2, evidence=OTHER, ok=False)
+        current = self.run_gate("status", "--change", result["change_id"])
+        self.assertEqual(current["rounds_used"], 1)
+        self.assertEqual(current["rounds"][0]["evidence_sha256"], HASH)
+
+    def test_adoption_rejects_invalid_count_digest_and_unacknowledged_history(self):
+        for count in (-1, 0, 4, 100):
+            self.adopt(count, ok=False)
+        self.adopt(evidence="not-a-sha256", ok=False)
+        self.adopt(key="../bad-key", ok=False)
+        self.run_gate("adopt", "--key", "adopted-001", "--rounds-consumed", 1,
+                      "--evidence", HASH, ok=False)
+        self.assertEqual(len(self.run_gate("list")), 1)
+
+    def test_same_history_cannot_be_readopted_under_a_new_key(self):
+        result = self.adopt()
+        self.adopt(key="renamed-key", ok=False)
+        self.assertEqual(len(self.run_gate("list")), 2)
+        current = self.run_gate("status", "--change", result["change_id"])
+        self.assertEqual(current["rounds_used"], 1)
+
+    def test_historical_round_cannot_be_claimed_recorded_or_interrupted(self):
+        self.change = self.adopt()["change_id"]
+        self.run_gate("claim", "--change", self.change, "--round", 1,
+                      "--perspective", "security", ok=False)
+        self.record(1, "security", "made-up-token", ok=False)
+        self.run_gate("interrupt", "--change", self.change, "--round", 1, ok=False)
+        self.assertEqual(self.run_gate("status", "--change", self.change)["decision"],
+                         "historical_unverified")
+
+    def test_concurrent_adoption_has_one_winner_without_duplicate_history(self):
+        command = [sys.executable, str(SCRIPT), "--state-dir", str(self.state), "adopt",
+                   "--key", "adopted-001", "--rounds-consumed", "1", "--evidence", HASH,
+                   "--ack-history"]
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+            results = list(pool.map(lambda _: subprocess.run(command, capture_output=True), range(4)))
+        self.assertEqual(sum(r.returncode == 0 for r in results), 1)
+        self.assertEqual(sum(r.returncode == 2 for r in results), 3)
+        winner = json.loads(next(r.stdout for r in results if r.returncode == 0))
+        self.assertEqual(winner["status"]["rounds_used"], 1)
+        self.assertEqual(len(self.run_gate("list")), 2)
+
+    def test_adoption_is_atomic_when_history_insert_fails(self):
+        with sqlite3.connect(self.state / "ledger.sqlite3") as db:
+            db.execute("CREATE TRIGGER fail_adoption BEFORE INSERT ON rounds "
+                       "WHEN NEW.status='adopted' BEGIN SELECT RAISE(ABORT, 'test failure'); END")
+        self.adopt(ok=False)
+        self.assertEqual(len(self.run_gate("list")), 1)
+
+    def test_explicit_state_supports_adoption_without_git(self):
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT), "--repo", "/does-not-exist", "--state-dir", str(self.state),
+             "adopt", "--key", "non-git-change", "--rounds-consumed", "1",
+             "--evidence", HASH, "--ack-history"],
+            cwd=self.tmp.name, env={**os.environ, "PATH": ""}, capture_output=True, text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["status"]["rounds_used"], 1)
+        self.assertFalse((Path(self.tmp.name) / ".git").exists())
+
     def test_linked_worktrees_use_same_default_ledger(self):
         repo = Path(self.tmp.name) / "repo"
         worktree = Path(self.tmp.name) / "linked-worktree"
@@ -253,7 +351,7 @@ class PackagingTests(unittest.TestCase):
         self.assertTrue(plugin.is_relative_to(ROOT))
         manifest = json.loads((plugin / ".claude-plugin/plugin.json").read_text())
         self.assertEqual(entry["name"], manifest["name"])
-        self.assertEqual(manifest["version"], "0.1.0")
+        self.assertEqual(manifest["version"], "0.1.1")
         self.assertFalse((plugin / "hooks").exists())
         self.assertFalse((plugin / ".mcp.json").exists())
 
