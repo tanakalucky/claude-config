@@ -1,96 +1,98 @@
-# Ledger commands
+# 台帳のコマンド
 
-Python 3.10+ and POSIX (macOS/Linux/WSL) are required. No dependencies or inference.
-Run from the target Git repo. Use the helper's absolute installed path in place
-of `GATE`; shell-quote paths and opaque values. Do not eval task or repo text.
-`--repo /path` is a global option. The default state is
-`git rev-parse --git-common-dir` plus `/workflow-kit`, shared by linked worktrees.
-Alternatively supply the same absolute `--state-dir /trusted/path` every time;
-its parent must exist. Never place it in the plugin cache or tracked source.
-This explicit state directory also works without Git metadata; do not initialize
-Git merely to use this helper.
+Python 3.10+ と POSIX 環境（macOS/Linux/WSL）が必要。依存関係やモデル推論は不要。
+対象の Git リポジトリから実行する。`GATE` はインストール済みヘルパーの絶対パスに
+置き換え、パスと不透明な値はシェルで適切に引用する。タスクやリポジトリの文章を
+評価・実行しない。`--repo /path` はグローバルオプションである。
+既定の状態ディレクトリは `git rev-parse --git-common-dir` に `/workflow-kit` を
+加えた場所であり、リンクされた worktree 間で共有される。
+代わりに、毎回同じ絶対パスの `--state-dir /trusted/path` を指定してもよい。
+その親ディレクトリは存在していなければならない。プラグインのキャッシュ内や
+追跡対象のソース内には決して置かない。明示した状態ディレクトリは Git のメタデータが
+なくても利用できる。このヘルパーのためだけに Git を初期化しない。
 
 ```sh
-# Only for genuinely new state, never recovery of a previously used ledger:
+# 本当に新しい状態の場合だけ使用する。使用済みの台帳の復旧には使わない。
 python3 "GATE" setup --ack-new-ledger
 python3 "GATE" list
 python3 "GATE" new --key feature-opaque-001
-# Save the returned change_id. Repeating the same key returns the same ID.
+# 返された change_id を保存する。同じキーを繰り返し使うと同じ ID が返る。
 python3 "GATE" status --change CHANGE_ID
 python3 "GATE" start --change CHANGE_ID --snapshot PACKET_SHA256
 python3 "GATE" claim --change CHANGE_ID --round 1 --perspective security
-# Invoke security-reviewer only after a successful claim, retaining its token.
+# claim が成功した後にだけ security-reviewer を呼び出し、そのトークンを保持する。
 python3 "GATE" record --change CHANGE_ID --round 1 --perspective security \
   --token CLAIM_TOKEN --result complete --p0 0 --p1 0 --p2 1 --report REPORT_SHA256
-# Also claim/invoke/record test-adequacy and design-rules-docs for this same round.
+# 同じラウンドで test-adequacy と design-rules-docs も claim・呼び出し・record する。
 python3 "GATE" check --change CHANGE_ID --snapshot PACKET_SHA256
 ```
 
-## Adopting a change already reviewed outside this ledger
+## 台帳外でレビュー済みの変更の取り込み
 
-Before using `new`, check whether this logical change already consumed review
-rounds. For a first-time migration only, reconcile that count against existing
-evidence. Preserve a sanitized historical summary identifying the change, the
-rounds actually consumed (including interruptions), and evidence references.
-Hash it locally; do not invent reviewer results or discard unresolved findings.
-If the count or history is uncertain, stop and ask the human.
+`new` を使う前に、この論理的な変更がすでにレビューラウンドを消費していないか確認する。
+初回の移行時に限り、既存の根拠と照合してその回数を確定する。変更、実際に消費した
+ラウンド数（中断を含む）、根拠への参照を明示した、機密情報を除去した履歴概要を保持する。
+ローカルでハッシュを計算し、レビュー結果を捏造したり未解決の指摘を捨てたりしない。
+回数や履歴が不確かな場合は中止し、人に確認する。
 
 ```sh
-# Non-Git checkout: choose one persistent, private directory outside source.
-# Only if this ledger has genuinely never been initialized:
+# Git 管理外のチェックアウトでは、ソース外に永続的な非公開ディレクトリを 1 つ選ぶ。
+# この台帳が本当に一度も初期化されていない場合だけ実行する。
 python3 "GATE" --state-dir /trusted/state/workflow-kit setup --ack-new-ledger
 python3 "GATE" --state-dir /trusted/state/workflow-kit list
 python3 "GATE" --state-dir /trusted/state/workflow-kit adopt \
   --key existing-change-001 --rounds-consumed 1 \
   --evidence HISTORY_SHA256 --ack-history
-# Keep the returned change_id. The next start reserves round 2, not round 1.
+# 返された change_id を保持する。次の start はラウンド 1 ではなくラウンド 2 を予約する。
 ```
 
-`adopt` accepts 1-3 previously consumed rounds and only an unused change key.
-It is atomic and refuses repeats or adoption over any existing change, even one
-without rounds. The same evidence hash cannot be adopted under another key.
-After an uncertain response, use `list`/`status`, never a new key.
-Imported rounds have status `adopted`, an `evidence_sha256`, and no reviewer rows,
-claims, finding counts, or code snapshot. They cannot be edited or retroactively
-marked complete. They reserve budget without claiming approval: `check` fails;
-status is `historical_unverified`, or `human_required` when all three rounds were
-consumed. The next normal round still needs all three perspectives. The helper
-validates the hash format, not the evidence's truth; the lead must reconcile it.
-This is not a recovery/reset mechanism for a lost existing ledger.
+`adopt` が受け付けるのは、過去に消費した 1～3 ラウンドと未使用の変更キーだけである。
+処理はアトミックであり、繰り返しの取り込みや、ラウンドがないものも含む既存の変更への
+上書きを拒否する。同じ根拠ハッシュを別のキーで取り込むことはできない。
+応答が不確かな場合は `list`/`status` を使い、新しいキーを作らない。
+取り込まれたラウンドにはステータス `adopted` と `evidence_sha256` があり、
+レビュー担当の行、claim、指摘件数、コードのスナップショットはない。
+編集や、後から完了済みとすることはできない。承認済みとはせずに枠だけを消費するため、
+`check` は失敗する。ステータスは `historical_unverified`、3 ラウンドすべてを
+消費済みなら `human_required` となる。次の通常ラウンドでも 3 観点すべてが必要である。
+ヘルパーが検証するのはハッシュの形式であり、根拠の真実性ではない。照合は lead が行う。
+これは、失われた既存の台帳を復旧・リセットする仕組みではない。
 
-## Results and recovery
+## 結果と復旧
 
-All digests are lowercase SHA-256 (64 hex characters). Compute them locally from
-sanitized artifacts, e.g. `sha256sum` or Python hashlib. A packet must identify
-its base/revision, relevant dirty and untracked changes, and test evidence.
-Redaction can hide relevant behavior: ask for safe synthetic evidence rather
-than sending raw secrets or pretending the review is complete.
+すべてのダイジェストは小文字の SHA-256（16 進数 64 文字）とする。
+`sha256sum` や Python hashlib などを使い、機密情報を除去した成果物からローカルで
+計算する。資料にはベース・リビジョン、関連する未コミット変更と未追跡の変更、
+テストの根拠を明示する。機密情報の除去によって関連する動作が隠れることがある。
+生の秘密情報を送ったりレビューが完了したふりをしたりせず、安全な合成データによる
+根拠を求める。
 
-`claim` succeeds once per perspective; duplicate claims fail. Persist the agent
-identifier alongside the change ID in the development handoff, without secrets.
-`status` recovers claim tokens after a session interruption. Continue the original
-agent if possible. If its launch/result is uncertain, do not relaunch blindly:
+`claim` は各観点につき一度だけ成功し、重複する claim は失敗する。
+開発の引き継ぎには、秘密情報を含めず、変更 ID とともにエージェントの識別子を保持する。
+セッション中断後は `status` で claim トークンを復元できる。可能なら元のエージェントを
+再開する。起動や結果が不確かな場合は、確認せずに再起動しない。
 
 ```sh
 python3 "GATE" record --change CHANGE_ID --round 1 --perspective security \
   --token CLAIM_TOKEN --result failed
-# Or close the whole interrupted round, preserving any completed perspectives:
+# または、完了した観点を保持したまま、中断したラウンド全体を終了する。
 python3 "GATE" interrupt --change CHANGE_ID --round 1
 ```
 
-No reset/delete/overwrite command exists. Completed identical records are
-idempotent; contradictory records fail. A started round consumes budget even
-if no agent launched. SQLite transactions serialize concurrent processes, and
-committed reservations survive crashes. Interrupted claims never expire.
-All three complete with zero P0/P1 means passed; P2 does not block. At three
-blocked/failed rounds, status says `human_required`. `check` rejects missing,
-failed, in-progress, or mismatched snapshots and grants no merge/deploy authority.
+リセット・削除・上書きのコマンドは存在しない。完了済みの同一記録は冪等であり、
+矛盾する記録は失敗する。エージェントが起動しなかった場合でも、開始したラウンドは
+枠を消費する。SQLite トランザクションが並行プロセスを直列化し、コミット済みの予約は
+クラッシュ後も保持される。中断した claim に有効期限はない。
+3 観点すべてが complete で P0/P1 が 0 件なら passed となり、P2 は妨げにならない。
+阻害要因あり・失敗のラウンドが 3 回に達すると、ステータスは `human_required` となる。
+`check` は、スナップショットがない、失敗している、進行中である、または一致しない場合に
+拒否し、マージ・デプロイの権限を与えない。
 
-State contains only opaque keys/IDs, hashes, counts, and statuses. Keep it private
-and retain it across sessions. Do not check it into Git. For backup, stop writers
-and copy the entire state directory using trusted tooling. Missing, partial,
-corrupt, unsupported-version, or insecure state fails closed. Do not delete it
-or run setup elsewhere; restore a known backup or ask the human to reconcile.
-A new clone/machine needs the same history transferred before continuing a
-change. This local ledger cannot detect deletion of its entire directory,
-fabricated inputs, a deliberately changed key/path, or direct Agent invocations.
+状態に含まれるのは不透明なキー・ID、ハッシュ、件数、ステータスだけである。
+非公開で保持し、セッションをまたいで引き継ぐ。Git にコミットしない。
+バックアップ時は書き込みを停止し、信頼できるツールで状態ディレクトリ全体をコピーする。
+状態の欠落、不完全さ、破損、未対応バージョン、安全でない状態を検出すると、安全側に停止する。
+削除したり別の場所で setup を実行したりせず、既知のバックアップを復元するか、
+人に照合を依頼する。新しい clone・マシンでは、変更を続行する前に同じ履歴を転送する
+必要がある。このローカル台帳は、ディレクトリ全体の削除、捏造した入力、意図的に変更した
+キー・パス、直接の Agent 呼び出しを検出できない。

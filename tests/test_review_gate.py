@@ -351,7 +351,7 @@ class PackagingTests(unittest.TestCase):
         self.assertTrue(plugin.is_relative_to(ROOT))
         manifest = json.loads((plugin / ".claude-plugin/plugin.json").read_text())
         self.assertEqual(entry["name"], manifest["name"])
-        self.assertEqual(manifest["version"], "0.1.1")
+        self.assertEqual(manifest["version"], "0.1.2")
         self.assertFalse((plugin / "hooks").exists())
         self.assertFalse((plugin / ".mcp.json").exists())
 
