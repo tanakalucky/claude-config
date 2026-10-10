@@ -1,6 +1,6 @@
 # Claude Config
 
-バージョン: 0.1.3
+バージョン: 0.1.4
 
 ## 導入
 Claude Code 2.1.271以上、Python 3.10+、Git、macOS/Linux/WSLが必要です。
@@ -23,14 +23,14 @@ python3 scripts/apply_settings.py
 未指定の設定は保持し、オブジェクトは再帰的に統合、配列は置き換えます。反映中は同じ設定を他で編集しないでください。
 
 ## 使い方・方針
-
 - 開発: `/workflow-kit:develop 変更キーと依頼内容`。継続時は同じ変更IDを使います。
+- Opus が短い計画を作り、ユーザーとホストが確認。承認後は実装・テスト修復・最大 3 回のレビューを完了かエスカレーションまで進めます。
+- 呼び出し側は工程ごとの停止を指示せず、同じ計画・変更 ID で継続。ホストは依頼された承認済み操作の実行と結果返却を担います。段階限定はユーザーが求めた場合だけです。
 - 構成の相談: `/workflow-kit:architecture 対象範囲と要件`
 - 詳細: [開発手順](plugins/workflow-kit/skills/develop/SKILL.md)・[台帳](plugins/workflow-kit/skills/develop/ledger.md)・[README の方式](plugins/workflow-kit/skills/architecture/directory-readme.md)
 
 応答・進捗・レビュー・文書・コメント/docstring・画面文言・テスト説明は日本語。識別子、API/CLI、設定キー、厳密一致の機械処理用文字列は維持します。
 原文引用に日本語の説明を添え、変更範囲と既存規約を守ります。通常セッションにも適用する場合は、既存の `CLAUDE.md` に必要な方針を取り込みます。
-
 配置: `plugins/` はワークフロー、`.claude-plugin/` はカタログ、`settings.json` は共通設定、`scripts/` は反映・リリース、`tests/` は検証、`.github/workflows/` は CI の条件・権限。repo 固有の規約は各 repo に置きます。
 
 ## 更新・リリース
