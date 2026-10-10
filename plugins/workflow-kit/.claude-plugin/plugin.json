@@ -1,6 +1,6 @@
 {
   "name": "workflow-kit",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "日本語で開発を進め、永続的な3ラウンド上限でレビューする共有ワークフロー",
   "author": { "name": "tanakalucky" },
   "repository": "https://github.com/tanakalucky/claude-config"

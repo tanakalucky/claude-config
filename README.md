@@ -1,6 +1,6 @@
 # Claude Config
 
-バージョン: 0.1.4
+バージョン: 0.1.5
 
 ## 導入
 Claude Code 2.1.271以上、Python 3.10+、Git、macOS/Linux/WSLが必要です。
