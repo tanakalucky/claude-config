@@ -1,6 +1,6 @@
 # Claude Config
 
-バージョン: 0.1.2
+バージョン: 0.1.3
 
 自分用の Claude Code 設定を複数のプロジェクトで再利用するリポジトリです。応答言語、開発時の日本語方針、共有ワークフローを管理します。
 
@@ -22,6 +22,12 @@ claude --agent workflow-kit:lead --model opus
 ```
 
 セッション内で `/workflow-kit:develop 変更キーと依頼内容` を実行。継続時は同じ変更IDを伝えます。初回だけ台帳を明示的に初期化します。詳細は[ワークフロー](plugins/workflow-kit/skills/develop/SKILL.md)と[台帳コマンド](plugins/workflow-kit/skills/develop/ledger.md)。
+
+## ディレクトリ構成を相談する
+
+新規構成や責務・依存境界を見直すときは、`/workflow-kit:architecture 対象範囲と要件` を使います。[architecture skill](plugins/workflow-kit/skills/architecture/SKILL.md) が既存の構成を調べ、少数の候補を比較し、ユーザーと決めた内容を適切な階層の README に残します。承認前にコードを移動したり、構成用の空ディレクトリを作ったりしません。
+
+各 README は自分の責務と直下の子、子間の依存ルールを説明し、子は上位の制約を継承します。意味のある境界にだけ置き、細部は子へ任せます。通常の develop でもルートから対象までの README を順に読み、必要な子だけを調べ、変更先との整合と文書更新を確認します。毎回再設計するものではありません。共通の読み方・保守方法はプラグイン内の [README の共通方式](plugins/workflow-kit/skills/architecture/directory-readme.md) に集約し、プロジェクト固有の構成は各 repo で決めます。
 
 ## 動き
 
@@ -100,6 +106,7 @@ python3 scripts/apply_settings.py
 
 ## 更新履歴
 
+- 0.1.3: architecture skill とディレクトリ単位の README 方式を追加。開発・調査・資料限定レビューへ接続し、段階的な読み込みと構成変更時の文書更新を明示
 - 0.1.2: 共有 settings.json と個人設定への反映スクリプト、agent/skill の日本語方針と日本語本文を追加。レビュー台帳の動作は変更なし
 - 0.1.1: 既存レビュー履歴の引き継ぎと Git 管理外の永続保存先に対応
 
