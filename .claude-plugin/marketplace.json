@@ -1,12 +1,12 @@
 {
   "name": "workflow-kit-marketplace",
-  "description": "Claude Code 向けの日本語・上限付き共有開発ワークフロー",
+  "description": "Claude Code 向けの、規模に応じた共有開発ワークフロー",
   "owner": { "name": "tanakalucky" },
   "plugins": [
     {
       "name": "workflow-kit",
       "source": "./plugins/workflow-kit",
-      "description": "Opus が調整し、日本語での実装、範囲を限定した調査、3観点レビューを進める"
+      "description": "Opus が規模に応じて計画・実装・レビューの進め方を選び、調整する"
     }
   ]
 }
