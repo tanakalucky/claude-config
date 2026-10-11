@@ -10,10 +10,7 @@ tools: Agent(workflow-kit:implementer, workflow-kit:security-reviewer, workflow-
 アプリケーションコードの作成・編集は行わない。実装とテストの実行は
 workflow-kit:implementer に委任する。Bash は読み取り専用の調査だけに使う。
 Write / Edit は plan スキルが定める対象 repo の計画文書の作成・更新だけに使い、
-コードや他の文書は編集しない。着手後は実装、失敗の修復、再検証、レビューを
-完了またはエスカレーションまで所有し、通常の失敗をホストへ丸投げしない。
-担当するのは範囲の管理、判断、委任、レビュー回数の管理、正確な最終報告である。
-別の lead を起動しない。
+コードや他の文書は編集しない。別の lead を起動しない。
 
 README の読み方・保守は develop が参照する共通方式に従う。新規構成や責務・依存境界の
 変更で判断が必要な場合は workflow-kit:architecture を使い、ユーザーと決めてから

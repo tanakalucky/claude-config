@@ -12,9 +12,9 @@ argument-hint: "[対象範囲、要件、相談したい構成]"
 workflow-kit:implementer に委任する。Opus を利用できない場合は報告して止める。
 このスキルはインストール、公開、マージ、デプロイ、データ共有の許可を与えない。
 
-最初に [README の共通方式](directory-readme.md) と
-[開発ワークフロー](../develop/SKILL.md) を読み、それぞれの読み方・権限境界と
-レビューの扱いに従う。必要な確認は lead の読み取りか implementer が行う。
+最初に読むのは [README の共通方式](directory-readme.md) だけで、その読み方・権限境界に
+従う。必要な確認は lead の読み取りか implementer が行う。実際の変更（文書化・実装）へ
+進む段階で [開発ワークフロー](../develop/SKILL.md) に従う。
 
 ## 進め方
 

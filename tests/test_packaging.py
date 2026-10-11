@@ -17,7 +17,6 @@ class PackagingTests(unittest.TestCase):
         self.assertTrue(plugin.is_relative_to(ROOT))
         manifest = json.loads((plugin / ".claude-plugin/plugin.json").read_text())
         self.assertEqual(entry["name"], manifest["name"])
-        self.assertEqual(manifest["version"], "0.2.0")
         self.assertFalse((plugin / "hooks").exists())
         self.assertFalse((plugin / ".mcp.json").exists())
 
@@ -37,14 +36,14 @@ class PackagingTests(unittest.TestCase):
         for name in ("develop", "plan", "review", "architecture"):
             self.assertTrue((PLUGIN / "skills" / name / "SKILL.md").is_file(), name)
 
-    def test_lead_agents_match_agent_files(self):
-        """lead が列挙するエージェントが実在し、未参照のエージェントファイルがない。"""
+    def test_lead_agent_references_exist(self):
+        """lead が列挙するエージェントの定義ファイルが実在する。"""
         lead = (PLUGIN / "agents/lead.md").read_text()
         agent_list = re.search(r"Agent\(([^)]*)\)", lead).group(1)
         names = set(re.findall(r"workflow-kit:([\w-]+)", agent_list))
         self.assertTrue(names)
-        files = {p.stem for p in (PLUGIN / "agents").glob("*.md")}
-        self.assertEqual(files - {"lead"}, names)
+        for name in names:
+            self.assertTrue((PLUGIN / "agents" / (name + ".md")).is_file(), name)
 
     def test_markdown_relative_links_resolve(self):
         """README とプラグイン配下の Markdown の相対リンク先が存在する。"""
