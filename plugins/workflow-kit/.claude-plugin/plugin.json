@@ -1,6 +1,6 @@
 {
   "name": "workflow-kit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "規模に応じて計画・実装・レビューの進め方を選ぶ共有開発ワークフロー",
   "author": { "name": "tanakalucky" },
   "repository": "https://github.com/tanakalucky/claude-config"
