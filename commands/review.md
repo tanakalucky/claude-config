@@ -1,6 +1,6 @@
 ---
 description: タスク変更全体を正確性/安全性・テスト・設計/可読性の3観点でレビューし、統合して報告する(読み取り専用)
-argument-hint: "[base(ブランチ/コミット)] [要件の要約]"
+argument-hint: "[比較元(ブランチ/コミット)] [要件の要約]"
 disallowed-tools: Write, Edit
 ---
 
@@ -11,28 +11,36 @@ disallowed-tools: Write, Edit
 ## 制約
 
 - 読み取り専用。ファイルの編集・作成・削除、およびGitの状態変更(add/commit/checkout/reset/stash/push等)は禁止。`disallowed-tools: Write, Edit` で編集ツールを除外している。
-- Bashを使う場合はGit読取コマンド(`git status` `git diff` `git log` `git show` `git ls-files` `git merge-base` `git rev-parse`)に限る。これは運用上の指示であり、完全なsandboxや拒否境界ではない。
+- Bashを使う場合はGit読取コマンド(`git status` `git diff` `git log` `git show` `git ls-files` `git merge-base` `git rev-parse` `git merge-base --is-ancestor`)に限る。これは運用上の指示であり、完全なsandboxや拒否境界ではない。
 - 親のinlineコンテキストで実行する。子agentを直接起動せず、3つのskillをSkill呼出で使う。
 - `allowed-tools` は使わない。
 
 ## 1. 対象の確定
 
-対象は「合意されたbase(分岐点)から最終worktreeまで」のタスク変更全体。次をすべて含める。
+対象は「合意された起点から最終worktreeまで」のタスク変更全体。次をすべて含める。
 
-- base以降の全taskコミット
+- 起点以降の全taskコミット
 - staged の変更
 - unstaged の変更
 - 未追跡の新規ファイル(`git ls-files --others --exclude-standard`)
 
 ignoredファイルとsecrets(`.env`、鍵、認証情報等)は含めない。内容も読まない。
 
-baseの決め方:
+### 起点(`<base>`)を固定SHAに解決する
 
-- leadまたは引数からbase/要件が渡されていればそれを使う。
-- 渡されておらず不明なら、最小の質問を1つだけして待つ。`main` や直近コミットへ自動で代替しない。
+比較元ブランチが進んでも無関係な差分を含めないため、起点は常に固定SHAとして解決し、以降の全コマンドでその同じSHAを使う。
+
+- 比較元(ブランチ/タグ/リモート追跡ref等)が指定された場合: `git merge-base <比較元> HEAD` の結果SHAを `<base>` とする。比較元の先端そのものは使わない。
+- 明示commitが合意した起点として指定された場合: `git merge-base --is-ancestor <commit> HEAD` でHEADの祖先であることを確認し、祖先であれば `git rev-parse <commit>` で得たそのSHAを `<base>` とする(merge-baseで置き換えない)。祖先でなければ曖昧として扱う。
+- 比較元/起点が渡されていない、曖昧、または解決できない(refが存在しない、merge-baseが得られない、祖先でない等)場合: 最小の質問を1つだけして待つ。`main` や直近コミットへ自動で代替しない。
+- leadから要件と起点が渡されていればそれを使う。
 - 1コミットやHEADだけを対象にしてはならない。
 
+解決した `<base>` のSHAと、その由来(比較元名またはcommit指定)を報告に記す。
+
 ## 2. 収集(順序を守る)
+
+以下の `<base>` は、手順1で解決した固定SHAと必ず一致させる。
 
 1. 先に変更ファイル名だけを列挙する: `git diff --name-only <base>`、`git log --oneline <base>..HEAD`、`git ls-files --others --exclude-standard`。
 2. 列挙結果から、機密(`.env`、鍵、認証情報、secrets類)とignoredを除き、読む対象を明示パスに確定する。除外したパスは名前だけ報告する。
@@ -47,7 +55,7 @@ baseの決め方:
 - `review-tests`
 - `review-design`
 
-各skillへは、要件・base・対象範囲(確定した明示パス一覧と除外パス名)・差分・適用規約の全文を、その呼出だけで自己完結するよう渡す。差分が大きい場合も、明示パス一覧とbaseは必ず渡し、各観点が関連コードを自分で読めるようにする。
+各skillへは、要件・解決済みbase(固定SHA)・対象範囲(確定した明示パス一覧と除外パス名)・差分・適用規約の全文を、その呼出だけで自己完結するよう渡す。差分が大きい場合も、明示パス一覧とbase SHAは必ず渡し、各観点が関連コードを自分で読めるようにする。
 
 ## 4. 統合と報告
 
@@ -60,7 +68,7 @@ baseの決め方:
 
 ```
 ## 対象
-base / 範囲 / 除外パス名 / 観点ごとの完了状況
+base(固定SHAと由来) / 範囲 / 除外パス名 / 観点ごとの完了状況
 
 ## 指摘
 [P0|P1|P2] path/to/file:行 — 内容
