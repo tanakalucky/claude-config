@@ -122,6 +122,23 @@ class LayoutTests(unittest.TestCase):
         for requirement in requirements:
             self.assertIn(requirement, content)
 
+    def test_shared_review_safety_contract_is_preserved(self):
+        """リンク先が存在するだけで、秘密除外や未完了の条件欠落を見逃さない。"""
+        # 準備 (Arrange)
+        path = ROOT / ".ai-config/review/policy.md"
+        requirements = ("ファイルの編集・作成・削除とGit状態の変更",
+                        "ignoredファイルとsecrets", "内容も読まない",
+                        "確定した明示パスだけを読む", "再試行ループは行わない",
+                        "失敗、未完了、空の結果を「指摘なし」にしない",
+                        "実行していなければ、読んで判断した旨を明記")
+
+        # 実行 (Act)
+        content = path.read_text(encoding="utf-8")
+
+        # 検証 (Assert)
+        for requirement in requirements:
+            self.assertIn(requirement, content)
+
     def test_coding_rules_include_the_approved_aaa_addition(self):
         """従来規約にAAA方針を追加した承認済み本文を保存する。"""
         # 準備 (Arrange)
