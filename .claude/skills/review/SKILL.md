@@ -14,6 +14,7 @@ disallowed-tools: Write, Edit
 
 [レビューの共通手順](../../../.ai-config/review/workflow.md)に従い、対象を確定して統合する。
 親のinlineコンテキストで実行する。子agentを直接起動せず、次の3つをSkill呼出で各1回実行して全結果を待つ。各skillは`context: fork` / `background: false`で会話履歴を持たない。
+共通手順の統合確認にはSkillの完了通知と返却内容を使い、見える子の操作記録があれば照合する。Skill完了だけから個別コマンドの実行を推定しない。
 
 - [review-correctness](../review-correctness/SKILL.md)
 - [review-tests](../review-tests/SKILL.md)

@@ -12,6 +12,7 @@ description: タスク変更全体を正確性/安全性・テスト・設計/�
 
 [レビューの共通手順](../../../.ai-config/review/workflow.md)に従い、対象を確定して統合する。
 次の3つを、独立した子agentに1つずつ渡して実行させ、全結果を待つ。
+共通手順の統合確認には各子の完了結果と返却内容を使い、見える子の操作記録があれば照合する。子の完了だけから個別コマンドの実行を推定しない。
 
 - [config-review-correctness](../config-review-correctness/SKILL.md)
 - [config-review-tests](../config-review-tests/SKILL.md)

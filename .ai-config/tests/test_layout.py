@@ -139,6 +139,28 @@ class LayoutTests(unittest.TestCase):
         for requirement in requirements:
             self.assertIn(requirement, content)
 
+    def test_review_integration_checks_evidence_and_scope(self):
+        """担当の完了を検証実施と混同せず、根拠と全範囲を統合時に照合する。"""
+        # 準備 (Arrange)
+        requirements = {
+            "policy.md": ("ツール呼出と結果に対応", "子担当の申告を実行証拠に置き換えない",
+                          "根拠を確認できない仮説は確定指摘にせず"),
+            "reviewer.md": ("自分が実行した操作と観測結果", "渡された完全な固定SHAと明示パス"),
+            "workflow.md": ("子担当の申告、親ではログ未確認", "固定baseからの収集結果",
+                            "P2も必要性の根拠を確認", "実際の操作と影響を報告",
+                            "この照合のために観点レビューを再実行しない"),
+        }
+
+        # 実行 (Act)
+        contents = {name: (ROOT / ".ai-config/review" / name).read_text(encoding="utf-8")
+                    for name in requirements}
+
+        # 検証 (Assert)
+        for name, phrases in requirements.items():
+            for phrase in phrases:
+                with self.subTest(document=name, requirement=phrase):
+                    self.assertIn(phrase, contents[name])
+
     def test_coding_rules_include_the_approved_aaa_addition(self):
         """従来規約にAAA方針を追加した承認済み本文を保存する。"""
         # 準備 (Arrange)

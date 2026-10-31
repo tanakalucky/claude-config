@@ -95,3 +95,5 @@ codex exec --sandbox read-only -c 'approval_policy="never"'
 実動作試験は同一base・同一合成差分を持つ隔離コピーで行い、モデル・権限条件・結果・
 ファイル不変を[検証記録](.ai-config/validation/README.md)に記録する。
 静的な参照検証とCLIの実行結果を区別し、未実施・認証失敗を成功と扱わない。
+統合時の証拠照合を改善した[別ケース評価](.ai-config/validation/pagination.md)も記録した。
+両CLIの主要動作は確認できたが、Claudeの担当別実施報告に誤りが残り、全方針への適合は未達。
