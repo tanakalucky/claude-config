@@ -7,6 +7,8 @@ background: false
 disallowed-tools: Write, Edit
 ---
 
+<!-- 自動生成: shared/review-correctness.md と scripts/generate.py を編集してください。 -->
+
 # 正確性/安全性レビュー
 
 会話履歴は引き継がれない。呼出側が渡した要件・base・対象範囲・差分・適用規約だけを前提にする。

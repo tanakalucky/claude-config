@@ -2,6 +2,9 @@
 description: 実装前に完了条件・スコープ・最小案・未確定点を短く揃える
 argument-hint: "[依頼内容]"
 ---
+
+<!-- 自動生成: shared/clarify.md と scripts/generate.py を編集してください。 -->
+
 # /clarify
 
 依頼内容($ARGUMENTS または直前の会話)について、実装に進む前の認識合わせを行う。

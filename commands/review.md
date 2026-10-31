@@ -4,6 +4,8 @@ argument-hint: "[比較元(ブランチ/コミット)] [要件の要約]"
 disallowed-tools: Write, Edit
 ---
 
+<!-- 自動生成: shared/review.md と scripts/generate.py を編集してください。 -->
+
 # /review
 
 タスク変更全体を3観点でレビューし、結果を統合して報告する。報告のみで、修正は行わない。
