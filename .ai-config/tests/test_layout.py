@@ -110,7 +110,9 @@ class LayoutTests(unittest.TestCase):
         # 準備 (Arrange)
         path = ROOT / ".agents/review-runtime.md"
         requirements = ("ユーザー指定のモデル・推論量", "未指定なら実行セッションの設定を継承",
-                        "読取専用sandbox", "on-request", "変更可能な外部ツールも無効化",
+                        "読取専用sandbox", "昇格は不可(`never`)または本人承認(`on-request`)",
+                        "変更可能な外部ツールも無効化", "全書込の自動承認ではない",
+                        "git diff --no-index -- /dev/null <path>", "未commitの現在の本文の代わりに使わない",
                         "条件を確認できなければ開始せず未完了", "技術的な書込拒否を実現しない")
 
         # 実行 (Act)

@@ -61,14 +61,17 @@ Claudeの観点担当には従来の`model: sonnet`、`context: fork`、`backgro
 
 Codexのモデル・推論量はユーザー指定、未指定なら実行セッションの設定を継承する。
 利用できない指定は黙って置き換えず未完了とする。モデル名は固定しない。
-レビュー専用セッションを読取専用sandbox、承認要求ありで起動する例:
+レビュー専用セッションを読取専用sandboxで起動する例:
 
 ```sh
 codex --sandbox read-only --ask-for-approval on-request
+# 非対話実行では、昇格要求を拒否するneverも利用できる
+codex exec --sandbox read-only -c 'approval_policy="never"'
 ```
 
 指定する場合は`--model <モデル名>`と`-c 'model_reasoning_effort="<推論量>"'`を追加する。
 変更可能な外部ツールも実行側で無効化し、子agentへ同じ条件を引き継ぐ。
+`read-only + never`はsandbox外への昇格を拒否する組合せであり、書込の自動承認ではない。
 `.agents/review-runtime.md`は指示であり、skillの読込だけでモデル・権限・子agent起動が設定されるわけではない。
 実行条件を確認できない場合や独立した委譲ができない場合は、未完了と報告する。
 

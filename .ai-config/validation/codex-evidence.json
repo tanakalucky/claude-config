@@ -1,0 +1,78 @@
+{
+  "date": "2026-10-31",
+  "fixture_base": "6b6ff85ddbc07a431c806cd91a3bdaef5aba1fa8",
+  "cli_version": "0.166.0-alpha.5.1",
+  "parent_runtime": {
+    "model": "gpt-6-astra",
+    "effort": "xhigh",
+    "approval_policy": "never",
+    "sandbox_policy": {
+      "type": "read-only"
+    }
+  },
+  "agents": [
+    {
+      "perspective": "review_correctness",
+      "model": "gpt-6-astra",
+      "effort": "xhigh",
+      "approval_policy": "never",
+      "sandbox_policy": {
+        "type": "read-only"
+      },
+      "status": "completed",
+      "completed_turns": 1
+    },
+    {
+      "perspective": "review_design",
+      "model": "gpt-6-astra",
+      "effort": "xhigh",
+      "approval_policy": "never",
+      "sandbox_policy": {
+        "type": "read-only"
+      },
+      "status": "completed",
+      "completed_turns": 1
+    },
+    {
+      "perspective": "review_tests",
+      "model": "gpt-6-astra",
+      "effort": "xhigh",
+      "approval_policy": "never",
+      "sandbox_policy": {
+        "type": "read-only"
+      },
+      "status": "completed",
+      "completed_turns": 1
+    }
+  ],
+  "review_prompt_sha256": "b47d7deacb7666b2b682ee91f9f1fef921b1f068de9718b7ab7e17ec7f74cc38",
+  "synthetic_diff_sha256": "dc0813fb41417a941ed9f79c90407f20c7b711a04c91da99d75e449e44dd1c19",
+  "snapshots": {
+    "codex": {
+      "unchanged": true,
+      "regular_files_and_symlinks": 26,
+      "sha256": "47b98a0dded00630b5844327a1934f0af007470b43d49e207e8650ac64ca441d"
+    },
+    "claude": {
+      "unchanged": true,
+      "regular_files_and_symlinks": 26,
+      "sha256": "47b98a0dded00630b5844327a1934f0af007470b43d49e207e8650ac64ca441d"
+    }
+  },
+  "codex_user_config_unchanged": true,
+  "result": {
+    "clarify": "completed",
+    "review": "completed",
+    "finding": "P1 shipping.py:2: 5000円の送料が500円になる。>=に戻す。",
+    "reviewer_tests_executed": false
+  },
+  "claude": {
+    "cli_version": "2.1.278",
+    "requested_model": "sonnet",
+    "requested_effort": "high",
+    "post_relogin_smoke": "401 OAuth access token has expired",
+    "clarify": "not_run",
+    "review": "not_run"
+  },
+  "comparison": "incomplete"
+}
