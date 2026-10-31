@@ -1,0 +1,177 @@
+{
+  "date": "2026-10-31",
+  "fixture_base": "6b6ff85ddbc07a431c806cd91a3bdaef5aba1fa8",
+  "synthetic_diff_sha256": "dc0813fb41417a941ed9f79c90407f20c7b711a04c91da99d75e449e44dd1c19",
+  "snapshots": {
+    "codex": {
+      "unchanged": true,
+      "regular_files_and_symlinks": 26,
+      "sha256": "47b98a0dded00630b5844327a1934f0af007470b43d49e207e8650ac64ca441d"
+    },
+    "claude": {
+      "unchanged": true,
+      "regular_files_and_symlinks": 26,
+      "sha256": "47b98a0dded00630b5844327a1934f0af007470b43d49e207e8650ac64ca441d"
+    }
+  },
+  "codex": {
+    "cli_version": "0.166.0-alpha.5.1",
+    "parent_runtime": {
+      "model": "gpt-6-astra",
+      "effort": "xhigh",
+      "approval_policy": "never",
+      "sandbox_policy": {
+        "type": "read-only"
+      }
+    },
+    "agents": [
+      {
+        "perspective": "review_correctness",
+        "model": "gpt-6-astra",
+        "effort": "xhigh",
+        "approval_policy": "never",
+        "sandbox_policy": {
+          "type": "read-only"
+        },
+        "status": "completed",
+        "completed_turns": 1
+      },
+      {
+        "perspective": "review_design",
+        "model": "gpt-6-astra",
+        "effort": "xhigh",
+        "approval_policy": "never",
+        "sandbox_policy": {
+          "type": "read-only"
+        },
+        "status": "completed",
+        "completed_turns": 1
+      },
+      {
+        "perspective": "review_tests",
+        "model": "gpt-6-astra",
+        "effort": "xhigh",
+        "approval_policy": "never",
+        "sandbox_policy": {
+          "type": "read-only"
+        },
+        "status": "completed",
+        "completed_turns": 1
+      }
+    ],
+    "codex_user_config_unchanged": true,
+    "result": {
+      "clarify": "completed",
+      "review": "completed",
+      "finding": "P1 shipping.py:2: 5000円の送料が500円になる。>=に戻す。",
+      "reviewer_tests_executed": false
+    },
+    "review_prompt_sha256": "b47d7deacb7666b2b682ee91f9f1fef921b1f068de9718b7ab7e17ec7f74cc38"
+  },
+  "claude": {
+    "cli_version": "2.1.278",
+    "requested_model": "sonnet",
+    "requested_effort": "high",
+    "observed_parent_model": "claude-sonnet-5",
+    "child_effort_independently_observed": false,
+    "permission_mode_requested": "manual",
+    "permission_mode_observed": "default",
+    "tools": [
+      "Bash",
+      "Glob",
+      "Grep",
+      "Read",
+      "Skill"
+    ],
+    "setting_sources": [
+      "project"
+    ],
+    "mcp_servers": [],
+    "oauth_refresh_lock_exception": ".claude/.oauth_refresh.lock",
+    "fixture_os_write_denied": true,
+    "boundary_test": {
+      "lock_lifecycle": true,
+      "denied_count": 5
+    },
+    "entrypoints": [
+      "clarify",
+      "review",
+      "review-correctness",
+      "review-design",
+      "review-tests"
+    ],
+    "clarify": "completed",
+    "review": "completed",
+    "children": [
+      {
+        "skill": "review-correctness",
+        "invocations": 1,
+        "task_id": "a682271a1bf112b88",
+        "skill_call_id": "toolu_01Qkqkf8mxiwGLMci3PsVMkw",
+        "status": "completed",
+        "observed_models": [
+          "claude-sonnet-5"
+        ],
+        "effort_observed": null
+      },
+      {
+        "skill": "review-tests",
+        "invocations": 1,
+        "task_id": "a5d07214dde2f104d",
+        "skill_call_id": "toolu_01M2uMr65BTxTZMkJvWF8gWx",
+        "status": "completed",
+        "observed_models": [
+          "claude-sonnet-5"
+        ],
+        "effort_observed": null
+      },
+      {
+        "skill": "review-design",
+        "invocations": 1,
+        "task_id": "a8ddde8f23367d9d3",
+        "skill_call_id": "toolu_019xV7URSJQQ3uxsZdcyW2Ua",
+        "status": "completed",
+        "observed_models": [
+          "claude-sonnet-5"
+        ],
+        "effort_observed": null
+      }
+    ],
+    "protected_settings_metadata_unchanged": true,
+    "reviewer_tests_executed": false,
+    "findings": [
+      {
+        "priority": "P1",
+        "location": "shipping.py:2",
+        "expected": true,
+        "summary": "5000円で送料500円になる。>=に戻す。"
+      },
+      {
+        "priority": "P2",
+        "location": "shipping.py:2",
+        "expected": false,
+        "summary": "境界コメントまたは定数名の追加。検証担当は根拠が弱いと評価。"
+      }
+    ],
+    "review_prompt_sha256": "695475e0461e90970f1a7cf923d4d91fc7fecbc1f8cb95c86a00c55a0d258253",
+    "outside_working_directory_reads_block_configured": true,
+    "outside_working_directory_read_probe": "not_tested"
+  },
+  "comparison": {
+    "core_behavior": "matched",
+    "all_policy_requirements": "not_passed",
+    "differences": [
+      "Claudeの統合結果に根拠の弱い追加P2が残った。",
+      "Claudeは固定要件に対して、意図的な仕様変更ならテスト等も変更するという不要な条件付き代案を添えた。",
+      "Claudeのshellにecho、子担当にbase省略のgit diffと短縮SHAが含まれた。最終報告のGit読取のみ・全観点の祖先確認再実行という説明も実行記録と一致しない。",
+      "Codexは規約読込前のbootstrapにpwd/rg/catを使った。"
+    ],
+    "limitations": [
+      "合成1ケースの確認であり、全環境や出力の決定性を保証しない。",
+      "秘密除外は共通本文の静的検証。秘密ファイルを読ませる実試験はしていない。",
+      "Claude子担当のモデルは観測済み。子ごとの実効effortはstreamにないため未確認。",
+      "本文参照・委譲・不具合検出・報告の主要項目・書込拒否を確認したが、Git限定と全コマンドでの固定SHA使用の厳密遵守は合格としていない。",
+      "作業ディレクトリ外の読取禁止はClaudeの起動設定を確認しただけで、範囲外Read拒否の実probeは未実施。"
+    ]
+  }
+}
