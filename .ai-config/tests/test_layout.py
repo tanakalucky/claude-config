@@ -32,6 +32,7 @@ class LayoutTests(unittest.TestCase):
             self.assertEqual(claude.readlink(), Path("AGENTS.md"))
             self.assertEqual(claude.read_bytes(), (copied / "AGENTS.md").read_bytes())
             self.assertIn(".ai-config/rules/coding.md", local_links(copied / "AGENTS.md"))
+            self.assertIn(".agents/review-runtime.md", local_links(copied / "AGENTS.md"))
             for path, link, resolved in links:
                 with self.subTest(source=path.relative_to(copied), target=link):
                     self.assertTrue(resolved.is_relative_to(copied))
@@ -224,7 +225,7 @@ def local_links(path: Path) -> list:
              if "://" not in link]
     # 統合先AGENTSの独自リンクは配布物の検証対象に含めない。
     if path.name in ("AGENTS.md", "CLAUDE.md"):
-        return [link for link in links if link.startswith(".ai-config/")]
+        return [link for link in links if link.startswith(".ai-config/") or link == ".agents/review-runtime.md"]
     return links
 
 
