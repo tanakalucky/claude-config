@@ -13,6 +13,7 @@ Codexのレビュー担当（親・子）は、規約・skillを読む最初の�
 
 作業開始時に、このファイルと同じルートにある
 [コーディング規約](.ai-config/rules/coding.md)を全文読んで適用する。
+ドキュメントの作成・更新では[記載方針](.ai-config/rules/documentation.md)も全文読んで適用する。
 Markdownリンクの自動展開を前提にせず、明示的に読む。見つからなければ不足を報告する。
 
 実装前の認識合わせにはClaude Codeの`/clarify`、Codexの`$config-clarify`を使う。
