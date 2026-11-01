@@ -32,6 +32,7 @@ class LayoutTests(unittest.TestCase):
             self.assertEqual(claude.readlink(), Path("AGENTS.md"))
             self.assertEqual(claude.read_bytes(), (copied / "AGENTS.md").read_bytes())
             self.assertIn(".ai-config/rules/coding.md", local_links(copied / "AGENTS.md"))
+            self.assertIn(".agents/review-runtime.md", local_links(copied / "AGENTS.md"))
             for path, link, resolved in links:
                 with self.subTest(source=path.relative_to(copied), target=link):
                     self.assertTrue(resolved.is_relative_to(copied))
@@ -99,6 +100,7 @@ class LayoutTests(unittest.TestCase):
             self.assertIn(ROOT / ".ai-config/review/policy.md", links)
             if name == "review":
                 self.assertIn(ROOT / ".ai-config/review/workflow.md", links)
+                self.assertIn(ROOT / ".ai-config/review/rounds.md", links)
                 for aspect in NAMES[2:]:
                     self.assertIn(ROOT / f"{host}/skills/{prefix}{aspect}/SKILL.md", links)
             else:
@@ -128,7 +130,7 @@ class LayoutTests(unittest.TestCase):
         path = ROOT / ".ai-config/review/policy.md"
         requirements = ("ファイルの編集・作成・削除とGit状態の変更",
                         "ignoredファイルとsecrets", "内容も読まない",
-                        "確定した明示パスだけを読む", "再試行ループは行わない",
+                        "確定した明示パスだけを読む",
                         "失敗、未完了、空の結果を「指摘なし」にしない",
                         "実行していなければ、読んで判断した旨を明記")
 
@@ -160,6 +162,27 @@ class LayoutTests(unittest.TestCase):
             for phrase in phrases:
                 with self.subTest(document=name, requirement=phrase):
                     self.assertIn(phrase, contents[name])
+
+    def test_round_policy_resolves_to_one_shared_file_after_copy(self):
+        """実装担当と両レビュー入口がコピー先の同一ラウンド定義へ到達する。"""
+        # 準備 (Arrange)
+        callers = ("AGENTS.md", ".ai-config/review/policy.md", ".ai-config/review/workflow.md",
+                   ".agents/skills/config-review/SKILL.md", ".claude/skills/review/SKILL.md")
+        with tempfile.TemporaryDirectory() as directory:
+            copied = (Path(directory) / "application").resolve()
+            copied.mkdir()
+            copy_distribution(copied)
+
+            # 実行 (Act)
+            targets = {name: {target for target in resolved_links(copied / name)
+                              if target.name == "rounds.md"} for name in callers}
+
+            # 検証 (Assert)
+            expected = copied / ".ai-config/review/rounds.md"
+            self.assertTrue(expected.is_file())
+            for name, links in targets.items():
+                with self.subTest(caller=name):
+                    self.assertEqual(links, {expected})
 
     def test_coding_rules_include_the_approved_aaa_addition(self):
         """従来規約にAAA方針を追加した承認済み本文を保存する。"""
@@ -202,7 +225,7 @@ def local_links(path: Path) -> list:
              if "://" not in link]
     # 統合先AGENTSの独自リンクは配布物の検証対象に含めない。
     if path.name in ("AGENTS.md", "CLAUDE.md"):
-        return [link for link in links if link.startswith(".ai-config/")]
+        return [link for link in links if link.startswith(".ai-config/") or link == ".agents/review-runtime.md"]
     return links
 
 
