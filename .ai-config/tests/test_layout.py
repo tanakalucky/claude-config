@@ -197,6 +197,45 @@ class LayoutTests(unittest.TestCase):
         # 検証 (Assert)
         self.assertEqual(actual, expected)
 
+    def test_both_hosts_reach_one_documentation_policy_after_copy(self):
+        """コピー後も両hostが同じREADME記載方針を明示的に読む。"""
+        # 準備 (Arrange)
+        with tempfile.TemporaryDirectory() as directory:
+            copied = (Path(directory) / "application").resolve()
+            copied.mkdir()
+            copy_distribution(copied)
+
+            # 実行 (Act)
+            entries = [copied / name for name in ("AGENTS.md", "CLAUDE.md")]
+            links = [resolved_links(path) for path in entries]
+            contents = [path.read_text(encoding="utf-8") for path in entries]
+
+            # 検証 (Assert)
+            expected = copied / ".ai-config/rules/documentation.md"
+            self.assertTrue(expected.is_file())
+            for targets, content in zip(links, contents):
+                self.assertIn(expected, targets)
+                self.assertIn("ドキュメントの作成・更新では[記載方針]", content)
+                self.assertIn("documentation.md)も全文読んで適用する", content)
+
+    def test_documentation_policy_separates_usage_from_work_results(self):
+        """利用者に必要な制約を残し、個別の作業結果はPRや報告へ分ける。"""
+        # 準備 (Arrange)
+        path = ROOT / ".ai-config/rules/documentation.md"
+        requirements = ("目的・使い方・設定方法・継続して必要な制約",
+                        "作業途中の状況、テストの実行結果、レビュー回数・指摘件数、対応履歴は書かず",
+                        "PR本文や作業報告に残す", "利用者が知る必要のある制約だけ",
+                        "詳しい経緯はIssueやPRへ分ける", "テストの実行方法は使い方として記載してよい",
+                        "利用判断に必要な注意は省略しない")
+
+        # 実行 (Act)
+        content = path.read_text(encoding="utf-8")
+
+        # 検証 (Assert)
+        for requirement in requirements:
+            with self.subTest(requirement=requirement):
+                self.assertIn(requirement, content)
+
 
 def copy_distribution(destination: Path) -> None:
     for name in DISTRIBUTION:

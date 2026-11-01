@@ -8,6 +8,7 @@ AGENTS.md                      共通の作業指示
 CLAUDE.md -> AGENTS.md          相対symlink
 .ai-config/
   rules/coding.md              コーディング規約
+  rules/documentation.md       READMEの記載方針
   workflows/clarify.md         認識合わせ
   review/
     policy.md                 制約・重大度・完了条件・出力形式
